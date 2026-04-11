@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Focus Method</title>
+
+<style>
+body { font-family: Arial; text-align: center; transition: 0.3s; }
+
+body.light { background: #eef2f7; color: black; }
+body.light h1 { background: #4CAF50; color: white; }
+body.light .box { background: white; }
+
+body.dark { background: #121212; color: white; }
+body.dark h1 { background: #1e1e1e; }
+body.dark .box { background: #1e1e1e; }
+
+.box {
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 340px;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
+
+input, textarea {
+    padding: 10px;
+    width: 85%;
+    margin: 5px;
+}
+
+textarea { height: 100px; }
+
+#mensaje { color: red; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<h1>📚 Focus Method</h1>
+
+<div class="box">
+    <h3>✏️ Datos</h3>
+    <input type="text" id="materia" placeholder="Materia">
+    <input type="number" id="edad" placeholder="Edad">
+    <br><br>
+    <button onclick="generarControl()">Crear preguntas</button>
+</div>
+
+<div class="box">
+    <h2 id="fase">Repaso</h2>
+    <h1 id="tiempo">10:00</h1>
+    <p id="mensaje"></p>
+    <button onclick="iniciar()">Empezar</button>
+    <button onclick="saltar()">Saltar</button>
+    <button onclick="reiniciar()">Reiniciar</button>
+</div>
+
+<div class="box">
+    <h3>📝 Preguntas</h3>
+    <div id="preguntas">Aquí aparecerán las preguntas</div>
+</div>
+
+<div class="box">
+    <h3>✍️ Respuestas</h3>
+    <textarea id="respuesta"></textarea>
+    <br>
+    <button onclick="corregir()">Corregir</button>
+</div>
+
+<div class="box">
+    <h3>🤖 Resultado</h3>
+    <div id="resultado">Aquí verás la corrección</div>
+</div>
+
+<script>
+// 🌙 MODO OSCURO
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.body.classList.add("dark");
+} else {
+    document.body.classList.add("light");
+}
+
+// 🔔 AUDIO
+let alarma = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
+
+// 🔊 SONAR
+function sonarAlarma() {
+    alarma.currentTime = 0;
+    alarma.play().catch(() => {});
+}
+
+// 🧠 FASES
+let fases = [
+    {nombre:"Repaso", tiempo:600},
+    {nombre:"Estudio 1", tiempo:2400},
+    {nombre:"Preguntas", tiempo:600},
+    {nombre:"Descanso", tiempo:900},
+
+    {nombre:"Estudio 2", tiempo:2400},
+    {nombre:"Preguntas", tiempo:600},
+    {nombre:"Descanso", tiempo:900},
+
+    {nombre:"Estudio 3", tiempo:2400},
+    {nombre:"Preguntas", tiempo:600},
+    {nombre:"Descanso", tiempo:900}
+];
+
+let faseActual = 0;
+let tiempoRestante = fases[0].tiempo;
+let intervalo;
+
+// ⏱️ Pantalla
+function actualizarPantalla() {
+    let min = Math.floor(tiempoRestante / 60);
+    let sec = tiempoRestante % 60;
+
+    document.getElementById("tiempo").innerText =
+        `${min}:${sec < 10 ? "0" : ""}${sec}`;
+
+    document.getElementById("fase").innerText =
+        fases[faseActual].nombre;
+}
+
+// ▶️ Iniciar
+function iniciar() {
+    clearInterval(intervalo);
+    document.getElementById("mensaje").innerText = "";
+
+    alarma.play().then(() => {
+        alarma.pause();
+        alarma.currentTime = 0;
+    }).catch(() => {});
+
+    intervalo = setInterval(() => {
+        tiempoRestante--;
+        actualizarPantalla();
+
+        if (tiempoRestante <= 0) {
+            sonarAlarma();
+            siguienteFase(true);
+        }
+    }, 1000);
+}
+
+// 🔄 Fase
+function siguienteFase(auto = false) {
+    faseActual++;
+
+    if (faseActual >= fases.length) {
+        alert("¡Terminaste! 🎉");
+        clearInterval(intervalo);
+        return;
+    }
+
+    tiempoRestante = fases[faseActual].tiempo;
+    actualizarPantalla();
+    clearInterval(intervalo);
+
+    if (auto) {
+        iniciar();
+    } else {
+        document.getElementById("mensaje").innerText = "👉 Presiona 'Empezar'";
+    }
+}
+
+// ⏭️ Saltar
+function saltar() {
+    sonarAlarma();
+    siguienteFase(false);
+}
+
+// 🔁 Reiniciar
+function reiniciar() {
+    clearInterval(intervalo);
+    faseActual = 0;
+    tiempoRestante = fases[0].tiempo;
+
+    document.getElementById("preguntas").innerHTML = "Aquí aparecerán las preguntas";
+    document.getElementById("resultado").innerHTML = "Aquí verás la corrección";
+    document.getElementById("respuesta").value = "";
+    document.getElementById("mensaje").innerText = "";
+
+    actualizarPantalla();
+}
+
+// 🧠 PREGUNTAS INTELIGENTES
+function generarControl() {
+    let materia = document.getElementById("materia").value;
+    let edad = document.getElementById("edad").value;
+
+    if (!materia || !edad) {
+        document.getElementById("preguntas").innerHTML = "Escribe materia y edad.";
+        return;
+    }
+
+    edad = parseInt(edad);
+
+    let cantidad = Math.min(10, Math.floor(edad / 2));
+    if (cantidad < 2) cantidad = 2;
+
+    let base = [];
+
+    if (edad <= 10) {
+        base = [
+            `¿Qué es ${materia}?`,
+            `Da un ejemplo de ${materia}.`,
+            `¿Para qué sirve ${materia}?`,
+            `Nombra algo importante de ${materia}.`
+        ];
+    } else if (edad <= 14) {
+        base = [
+            `Explica ${materia} con tus palabras.`,
+            `Da un ejemplo de ${materia}.`,
+            `Haz un resumen de ${materia}.`,
+            `¿Por qué es importante ${materia}?`,
+            `¿Dónde se usa ${materia}?`
+        ];
+    } else if (edad <= 17) {
+        base = [
+            `Explica ${materia} y da un ejemplo.`,
+            `¿Cómo se aplica ${materia}?`,
+            `Haz un resumen claro.`,
+            `¿Por qué es importante?`,
+            `Relaciona con la vida real.`,
+            `Da una situación donde se use.`
+        ];
+    } else {
+        base = [
+            `Explica ${materia} en detalle.`,
+            `¿Por qué es importante?`,
+            `Da un ejemplo real.`,
+            `Analiza una situación.`,
+            `Relación con otros temas.`,
+            `Ventajas y desventajas.`,
+            `Caso práctico.`,
+            `¿Cómo mejorarías su uso?`
+        ];
+    }
+
+    let preguntas = "";
+
+    for (let i = 0; i < cantidad; i++) {
+        preguntas += `<li>${base[i % base.length]}</li>`;
+    }
+
+    document.getElementById("preguntas").innerHTML =
+        `<b>${materia} (${cantidad} preguntas)</b><ol>${preguntas}</ol>`;
+}
+
+// 🤖 CORRECCIÓN EN ESPAÑOL
+function corregir() {
+    let texto = document.getElementById("respuesta").value;
+
+    if (!texto || texto.trim() === "") {
+        document.getElementById("resultado").innerText = "Escribe una respuesta primero.";
+        return;
+    }
+
+    let palabras = texto.trim().split(/\s+/).length;
+
+    if (palabras < 5) {
+        document.getElementById("resultado").innerText = "Muy corto. Intenta explicar más.";
+    } 
+    else if (palabras < 15) {
+        document.getElementById("resultado").innerText = "Bien 👍, pero puedes mejorar.";
+    } 
+    else {
+        document.getElementById("resultado").innerText = "Muy bien 🔥 respuesta completa.";
+    }
+}
+
+actualizarPantalla();
+</script>
+
+</body>
+</html>
